@@ -404,3 +404,25 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.dark-court-wrapper {
+  background: linear-gradient(180deg, #12161c, #0b0f14);
+  border-color: #303844;
+}
+
+.court-svg.dark {
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+
+.shot-marker {
+  transition: transform 120ms ease;
+}
+
+.shot-marker:hover {
+  transform: scale(1.05);
+}
+
+.make-marker circle,
+.miss-marker line {
+  vector-effect: non-scaling-stroke;
+}

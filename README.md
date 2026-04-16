@@ -104,3 +104,11 @@ npm run start
 - Standard Next.js deployment.
 - Import project into Vercel with default build settings.
 - No external API credentials or database setup required for V3.
+
+## Court visualization (V3 dark theme)
+
+- SVG-based dark half-court with high-contrast white lines
+- Includes hoop, backboard, restricted-area dotted arc, lane, free-throw line, split free-throw circle, three-point arc, and corner lines
+- Makes render as green circles, misses render as red X markers
+- Marker jitter avoids exact overlap when multiple shots are in the same area
+- Hovering markers shows make/miss + zone + shot type tooltip
