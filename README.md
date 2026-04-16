@@ -1,51 +1,87 @@
-# Shot Chart App (Next.js) — Version 2
+# Shot Chart App (Next.js) — Version 3
 
-Version 2 upgrades the original prototype into a faster workflow for real video review sessions while staying fully local and simple to deploy.
+Version 3 pivots the product to an **import-first analytics workflow**: users import structured event data, the app normalizes it client-side, auto-generates a shot chart, and sends only uncertain events to a review queue.
 
-## What Version 2 adds
+## What Version 3 adds
 
-- **Quick Mode** and **Precision Mode** logging
-  - **Quick Mode:** click roughly, app snaps shot to nearest logical zone anchor
-  - **Precision Mode:** exact point placement with drag-to-reposition editing
-- **Court zones** with per-shot zone assignment:
-  - Rim
-  - Paint
-  - Short Mid
-  - Long Mid
-  - Left Corner 3
-  - Right Corner 3
-  - Above-the-Break 3
-- **Expanded shot model** for each shot:
-  - `id`, `x`, `y`, `makeMiss`, `zone`, `timestampSeconds`, `shotType`, `notes`, `createdAt`
-- **Video review upgrades**
-  - frame stepping
-  - current timestamp display
-  - auto-attach timestamp when logging a shot
-- **Shot editing workflow**
-  - select marker or shot row
-  - edit make/miss, zone, shot type, notes
-  - delete shot
-  - drag marker in Precision Mode
-- **Session panel + localStorage persistence**
-  - player name, opponent, game date, session notes
-  - save session
-  - load session
-  - clear session
-- **Analytics panel**
-  - total, makes, misses, FG%
-  - attempts/makes/FG% by zone
-- **Export options**
-  - export chart as PNG
-  - export shot list as CSV
+- New top-level workflow mode switch:
+  - **Event Import** (default, primary)
+  - **Manual / Video Review** (secondary fallback)
+- Event import methods:
+  - Paste JSON
+  - Upload JSON file
+  - Paste CSV
+- Mapping UI for flexible source schemas:
+  - Detects source keys/columns
+  - Lets users map fields to normalized schema
+  - Supports local mapping preset save/load in `localStorage`
+- Normalized event pipeline with internal schema:
+  - `id`, `playerName`, `team`, `opponent`, `period`, `gameClock`, `timestampSeconds`, `result`, `shotType`, `rawDescription`, `source`, `x`, `y`, `zone`, `distanceFeet`, `createdAt`
+  - plus inference metadata: `inferredZone`, `inferenceConfidence`, `inferenceReason`
+- Auto chart generation:
+  - Uses provided `x/y` directly
+  - Uses zone anchors when only zone is available
+  - Uses heuristics to infer zone when both are missing
+- Needs Review queue:
+  - edit result/zone/x/y/notes
+  - confirm event into chart
+  - reject event
+- Player filtering for single-player shot chart focus
+- Extended session model persisted in `localStorage`:
+  - session title, selected player, source type, imported raw data, normalized events, review queue, confirmed events, rejected events, notes
+- Enhanced exports:
+  - normalized events JSON
+  - confirmed chart data JSON
+  - shot list CSV
+  - chart PNG
+- Sample import templates:
+  - JSON with x/y
+  - JSON with zone-only
+  - CSV with descriptions + result
 
-## Constraints honored
+## Supported zones
 
-- Next.js app-router architecture
-- Deployable on Vercel
-- No auth
-- No database
-- localStorage persistence only
-- Minimal dependencies
+- Rim
+- Paint
+- Short Mid
+- Long Mid
+- Left Corner 3
+- Right Corner 3
+- Above-the-Break 3
+- Free Throw
+- Unknown
+
+## How mapping works
+
+1. Parse pasted/uploaded JSON or CSV.
+2. App detects source keys/columns.
+3. Map source keys to normalized fields.
+4. Run normalize + generate.
+5. Confirm uncertain events from the review queue.
+
+## How zone inference works
+
+If an event has no `x/y` and no usable zone:
+- infer from `shotType`, `distanceFeet`, and `rawDescription`
+- keyword heuristics include corner-3, layup/dunk/hook/floater, three-point, free throw terms
+- inference produces:
+  - `inferredZone`
+  - `inferenceConfidence`
+  - `inferenceReason`
+- low-confidence or conflicting events are marked **Needs Review**
+
+## What “Needs Review” means
+
+Events are queued when data quality is insufficient, such as:
+- missing make/miss result
+- missing player
+- unknown or low-confidence zone
+- incomplete coordinate pair (`x` without `y`, or vice versa)
+
+## LocalStorage usage
+
+Version 3 stores local session state only in browser `localStorage`.
+No auth, no backend DB, no paid APIs.
 
 ## Local run
 
@@ -56,7 +92,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Build / production
+## Production
 
 ```bash
 npm run build
@@ -65,31 +101,6 @@ npm run start
 
 ## Vercel deployment notes
 
-This project is a standard Next.js app and can be deployed directly on Vercel:
-
-1. Push repo to GitHub/GitLab/Bitbucket.
-2. Import project in Vercel.
-3. Use default Next.js build settings.
-4. Deploy.
-
-No server-side database config is required for V2.
-
-## Quick Mode vs Precision Mode
-
-- **Quick Mode:**
-  - Designed to reduce manual effort.
-  - Your click is interpreted, classified to a zone, then snapped to a nearest zone anchor point for consistency.
-  - Great for fast charting during review.
-
-- **Precision Mode:**
-  - Stores exact click coordinates.
-  - Lets you drag markers for fine correction.
-  - Better for detailed/manual chart accuracy.
-
-## Save / Load behavior
-
-- `Save Session` writes session metadata, shot list, and logging mode into browser `localStorage`.
-- `Load Session` restores that saved snapshot.
-- `Clear Session` wipes localStorage and resets current in-memory state.
-
-All data remains on the user’s device in the browser.
+- Standard Next.js deployment.
+- Import project into Vercel with default build settings.
+- No external API credentials or database setup required for V3.
